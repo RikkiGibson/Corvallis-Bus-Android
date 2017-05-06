@@ -7,6 +7,7 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.widget.RemoteViews;
 
 import osu.appclub.corvallisbus.MainActivity;
@@ -14,6 +15,18 @@ import osu.appclub.corvallisbus.R;
 
 public class CorvallisBusWidgetProvider extends AppWidgetProvider {
     public static final String UPDATE_ACTION = "osu.appclub.corvallisbus.UPDATE_ACTION";
+    public static final String SIZE_CHANGE_ACTION = "osu.appclubs.corvallisbus.SIZE_CHANGE_ACTION";
+    public static final String EXTRA_NEW_HEIGHT = "EXTRA_NEW_HEIGHT";
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
+        Intent sizeChange = new Intent(context, CorvallisBusWidgetService.class);
+        sizeChange.setAction(SIZE_CHANGE_ACTION);
+        int newHeight = newOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT);
+        sizeChange.putExtra(EXTRA_NEW_HEIGHT, newHeight);
+        context.sendBroadcast(sizeChange);
+    }
 
     private void setUpdateAlarm(Context context) {
         Intent updateItt = new Intent(context, this.getClass());
