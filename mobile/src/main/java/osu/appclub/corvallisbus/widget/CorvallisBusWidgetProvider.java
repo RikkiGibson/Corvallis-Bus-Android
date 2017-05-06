@@ -15,16 +15,17 @@ import osu.appclub.corvallisbus.R;
 
 public class CorvallisBusWidgetProvider extends AppWidgetProvider {
     public static final String UPDATE_ACTION = "osu.appclub.corvallisbus.UPDATE_ACTION";
-    public static final String SIZE_CHANGE_ACTION = "osu.appclubs.corvallisbus.SIZE_CHANGE_ACTION";
+    public static final String SIZE_CHANGE_ACTION = "osu.appclub.corvallisbus.SIZE_CHANGE_ACTION";
     public static final String EXTRA_NEW_HEIGHT = "EXTRA_NEW_HEIGHT";
+    public static final String EXTRA_WIDGET_ID = "EXTRA_WIDGET_ID";
 
     @Override
     public void onAppWidgetOptionsChanged(Context context, AppWidgetManager appWidgetManager, int appWidgetId, Bundle newOptions) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions);
-        Intent sizeChange = new Intent(context, CorvallisBusWidgetService.class);
-        sizeChange.setAction(SIZE_CHANGE_ACTION);
+        Intent sizeChange = new Intent(SIZE_CHANGE_ACTION);
         int newHeight = newOptions.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT);
         sizeChange.putExtra(EXTRA_NEW_HEIGHT, newHeight);
+        sizeChange.putExtra(EXTRA_WIDGET_ID, appWidgetId);
         context.sendBroadcast(sizeChange);
     }
 
@@ -42,7 +43,7 @@ public class CorvallisBusWidgetProvider extends AppWidgetProvider {
         if (UPDATE_ACTION.equals(intent.getAction())) {
             setUpdateAlarm(context);
             AppWidgetManager awm = AppWidgetManager.getInstance(context);
-            int[] appWidgetIds = awm.getAppWidgetIds(new ComponentName(context, this.getClass()));
+            int[] appWidgetIds = awm.getAppWidgetIds(new ComponentName(context, CorvallisBusWidgetProvider.class));
             awm.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_list);
         }
 

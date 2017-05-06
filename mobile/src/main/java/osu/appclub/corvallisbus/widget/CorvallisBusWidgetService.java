@@ -1,8 +1,12 @@
 package osu.appclub.corvallisbus.widget;
 
 import android.Manifest;
+import android.appwidget.AppWidgetManager;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -39,13 +43,15 @@ public class CorvallisBusWidgetService extends RemoteViewsService {
     }
 }
 
-class CorvallisBusRemoteViewsFactory implements
-        RemoteViewsService.RemoteViewsFactory,
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
+class CorvallisBusRemoteViewsFactory
+        extends BroadcastReceiver
+        implements RemoteViewsService.RemoteViewsFactory,
+            GoogleApiClient.ConnectionCallbacks,
+            GoogleApiClient.OnConnectionFailedListener {
     private List<FavoriteStopViewModel> favoriteStops = new ArrayList<>();
     private final Context context;
     private final GoogleApiClient apiClient;
+    int displayCount = 2;
 
     CorvallisBusRemoteViewsFactory(Context context) {
         this.context = context;
@@ -54,6 +60,25 @@ class CorvallisBusRemoteViewsFactory implements
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();
+
+        IntentFilter filter = new IntentFilter(CorvallisBusWidgetProvider.SIZE_CHANGE_ACTION);
+        context.registerReceiver(this, filter);
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (!CorvallisBusWidgetProvider.SIZE_CHANGE_ACTION.equals(intent.getAction())) {
+            return;
+        }
+
+        int widgetID = intent.getIntExtra(CorvallisBusWidgetProvider.EXTRA_WIDGET_ID, -1);
+        int newHeight = intent.getIntExtra(CorvallisBusWidgetProvider.EXTRA_NEW_HEIGHT, -1);
+        CorvallisBusPreferences.setWidgetDisplayCount(context, widgetID, newHeight);
+        displayCount = newHeight / 65;
+
+        AppWidgetManager awm = AppWidgetManager.getInstance(context);
+        int[] appWidgetIds = awm.getAppWidgetIds(new ComponentName(context, CorvallisBusWidgetProvider.class));
+        awm.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_list);
     }
 
     @Override
@@ -88,13 +113,27 @@ class CorvallisBusRemoteViewsFactory implements
 
     @Override
     public int getCount() {
-        return favoriteStops.size();
+        return displayCount;
+    }
+
+    private FavoriteStopViewModel getFavoriteStop(int i) {
+        // If only one stop is being displayed, prefer a user favorite to nearest stop
+        if (displayCount == 1) {
+            for (FavoriteStopViewModel favorite : favoriteStops) {
+                if (!favorite.isNearestStop) {
+                    return favorite;
+                }
+            }
+        }
+
+        return favoriteStops.get(i);
     }
 
     @Override
     public RemoteViews getViewAt(int i) {
+        FavoriteStopViewModel favorite = getFavoriteStop(i);
+
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_row);
-        FavoriteStopViewModel favorite = favoriteStops.get(i);
 
         rv.setTextViewText(R.id.stopName, favorite.stopName);
 
@@ -177,7 +216,7 @@ class CorvallisBusRemoteViewsFactory implements
 
     @Override
     public void onDataSetChanged() {
-        Log.d("osu.appclub", "WIDGET: RemoteViewsFactory.onDataSetChanged called");
+        Log.d("osu.appclub", "WIDGET: remoteviewfactory " + toString());
         List<Integer> favoriteStopIds = CorvallisBusPreferences.getFavoriteStopIds(context);
         Location loc = getUserLocation();
 
@@ -189,5 +228,4 @@ class CorvallisBusRemoteViewsFactory implements
             favoriteStops.addAll(newFavorites);
         }
     }
-
 }

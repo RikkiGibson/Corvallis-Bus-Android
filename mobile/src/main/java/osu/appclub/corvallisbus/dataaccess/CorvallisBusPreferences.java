@@ -20,6 +20,7 @@ public class CorvallisBusPreferences {
     public static final String PREFERENCES_KEY = "osu.appclub.corvallisbus";
     public static final String FAVORITE_STOPS_KEY = "favoriteStops";
     public static final String LOCATION_REQUESTED_KEY = "locationRequested";
+    public static final String WIDGET_DISPLAY_COUNT_KEY = "widgetDisplayCount";
 
     @Nullable
     private static List<Integer> cachedFavoriteStopIds;
@@ -56,6 +57,18 @@ public class CorvallisBusPreferences {
     public static void setWasLocationRequested(@NonNull Context context, boolean wasLocationRequested) {
         SharedPreferences.Editor preferencesEditor = context.getSharedPreferences(PREFERENCES_KEY, 0).edit();
         preferencesEditor.putBoolean(LOCATION_REQUESTED_KEY, wasLocationRequested);
+        preferencesEditor.apply();
+    }
+
+    public static int getWidgetDisplayCount(Context context, int widgetID) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFERENCES_KEY, 0);
+        int displayCount = preferences.getInt(WIDGET_DISPLAY_COUNT_KEY + widgetID, 2);
+        return displayCount;
+    }
+
+    public static void setWidgetDisplayCount(Context context, int widgetID, int newHeight) {
+        SharedPreferences.Editor preferencesEditor = context.getSharedPreferences(PREFERENCES_KEY, 0).edit();
+        preferencesEditor.putInt(WIDGET_DISPLAY_COUNT_KEY + widgetID, newHeight);
         preferencesEditor.apply();
     }
 }
