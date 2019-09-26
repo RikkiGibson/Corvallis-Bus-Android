@@ -141,7 +141,9 @@ public final class CorvallisBusAPIClient {
         List<RouteDetailsViewModel> viewModels = new ArrayList<>();
         for (RouteArrivalsSummary arrivalsSummary : arrivalsSummaries) {
             BusRoute route = staticData.routes.get(arrivalsSummary.routeName);
-            viewModels.add(new RouteDetailsViewModel(arrivalsSummary, route));
+            if (route != null) {
+                viewModels.add(new RouteDetailsViewModel(arrivalsSummary, route));
+            }
         }
 
         return viewModels;
